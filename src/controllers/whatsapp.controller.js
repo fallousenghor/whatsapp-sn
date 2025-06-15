@@ -1,6 +1,8 @@
 import { setupContactEvents } from "./contact.controller.js";
 import { setupNouvelleDiscussionEvents } from "./nouvelle.discussion.controller.js";
 import { setupGroupeEvents } from "./groupe.controller.js";
+import { setupMessageEvents } from "./message.controller.js";
+import { setupDiscussionEvents, startDiscussionPolling } from "./discussion.controller.js";
 import {
   getContacts,
   getContactById,
@@ -384,6 +386,15 @@ export async function setupPanelEvents() {
 }
 
 export function setupAccueilEvents() {
+  // Initialiser les événements de messagerie
+  setupMessageEvents();
+  
+  // Initialiser les discussions
+  setupDiscussionEvents();
+  
+  // Démarrer le polling des discussions
+  startDiscussionPolling();
+
   document.addEventListener("click", (event) => {
     if (event.target.closest("#logoutBtn")) {
       localStorage.removeItem("user");

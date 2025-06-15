@@ -4,6 +4,7 @@ import {
   handleContactSearch,
 } from "../utils/search.utils";
 import { getContactsByUserId } from "../services/contact.service";
+import { setCurrentConversation } from "./message.controller.js";
 
 export async function setupNouvelleDiscussionEvents() {
   const contactsContainer = document.getElementById("contacts-list");
@@ -52,13 +53,21 @@ export async function setupNouvelleDiscussionEvents() {
 
     const attachContactListeners = () => {
       document.querySelectorAll(".contact-item").forEach((item) => {
-        item.addEventListener("click", () => {
+        item.addEventListener("click", async () => {
           const contactId = item.dataset.contactId;
           const contact = allContacts.find((c) => c.id === contactId);
           if (contact) {
-            document.getElementById(
-              "contactName"
-            ).textContent = `${contact.prenom} ${contact.nom}`;
+            // Retourner à la vue principale et démarrer la conversation
+            const response = await fetch("/views/pages/whatsap.views.html");
+            const html = await response.text();
+            document.getElementById("panel").innerHTML = html;
+            
+            // Configurer la conversation
+            await setCurrentConversation(
+              'contact', 
+              contact.id, 
+              `${contact.prenom} ${contact.nom}`
+            );
           }
         });
       });
