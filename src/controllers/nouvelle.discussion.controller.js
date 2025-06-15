@@ -2,9 +2,11 @@ import {
   sortContactsAlphabetically,
   filterContacts,
   handleContactSearch,
-} from "../utils/search.utils";
-import { getContactsByUserId } from "../services/contact.service";
+} from "../utils/search.utils.js";
+import { getContactsByUserId } from "../services/contact.service.js";
 import { setCurrentConversation } from "./message.controller.js";
+import { loadView } from "../router.js";
+import { setupAccueilEvents } from "./whatsapp.controller.js";
 
 export async function setupNouvelleDiscussionEvents() {
   const contactsContainer = document.getElementById("contacts-list");
@@ -57,17 +59,17 @@ export async function setupNouvelleDiscussionEvents() {
           const contactId = item.dataset.contactId;
           const contact = allContacts.find((c) => c.id === contactId);
           if (contact) {
-            // Retourner à la vue principale et démarrer la conversation
-            const response = await fetch("/views/pages/whatsap.views.html");
-            const html = await response.text();
-            document.getElementById("panel").innerHTML = html;
+            // Retourner à la vue principale
+            await loadView("/views/pages/whatsap.views.html", setupAccueilEvents);
             
-            // Configurer la conversation
-            await setCurrentConversation(
-              'contact', 
-              contact.id, 
-              `${contact.prenom} ${contact.nom}`
-            );
+            // Attendre que la vue soit chargée puis configurer la conversation
+            setTimeout(async () => {
+              await setCurrentConversation(
+                'contact', 
+                contact.id, 
+                `${contact.prenom} ${contact.nom}`
+              );
+            }, 100);
           }
         });
       });

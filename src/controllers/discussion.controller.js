@@ -4,19 +4,29 @@ import { getGroupeById } from "../services/groupe.service.js";
 import { setCurrentConversation } from "./message.controller.js";
 
 let allDiscussions = [];
-let currentFilter = 'all'; // all, unread, favorites, groups
+let currentFilter = 'all';
 
 export async function setupDiscussionEvents() {
   await loadDiscussions();
   setupFilterTabs();
+  setupSearchFilter();
 }
 
 async function loadDiscussions() {
   try {
     const currentUser = JSON.parse(localStorage.getItem('user'));
-    if (!currentUser?.id) return;
+    if (!currentUser?.id) {
+      displayEmptyState();
+      return;
+    }
 
     const conversations = await getUserConversations(currentUser.id);
+    
+    if (conversations.length === 0) {
+      allDiscussions = [];
+      displayEmptyState();
+      return;
+    }
     
     // Enrichir les conversations avec les détails des contacts/groupes
     allDiscussions = await Promise.all(conversations.map(async (conv) => {
@@ -54,6 +64,7 @@ async function loadDiscussions() {
     
   } catch (error) {
     console.error('Erreur chargement discussions:', error);
+    displayEmptyState();
   }
 }
 
@@ -70,15 +81,32 @@ function getFilteredDiscussions() {
   }
 }
 
+function displayEmptyState() {
+  const discussionsContainer = document.getElementById('discussions-list');
+  if (!discussionsContainer) return;
+
+  discussionsContainer.innerHTML = `
+    <div class="text-center p-8 text-gray-400">
+      <i class="fas fa-comments text-4xl mb-4"></i>
+      <p>Aucune discussion</p>
+      <p class="text-sm mt-2">Commencez une nouvelle conversation</p>
+    </div>
+  `;
+}
+
 function displayDiscussions(discussions) {
-  const discussionsContainer = document.querySelector('#panel .overflow-y-auto:last-child');
+  const discussionsContainer = document.getElementById('discussions-list');
   if (!discussionsContainer) return;
 
   if (discussions.length === 0) {
+    const emptyMessage = currentFilter === 'all' 
+      ? 'Aucune discussion trouvée'
+      : `Aucune discussion ${getFilterLabel(currentFilter)}`;
+    
     discussionsContainer.innerHTML = `
       <div class="text-center p-8 text-gray-400">
         <i class="fas fa-comments text-4xl mb-4"></i>
-        <p>Aucune discussion trouvée</p>
+        <p>${emptyMessage}</p>
         <p class="text-sm mt-2">Commencez une nouvelle conversation</p>
       </div>
     `;
@@ -161,6 +189,15 @@ function displayDiscussions(discussions) {
   });
 }
 
+function getFilterLabel(filter) {
+  switch (filter) {
+    case 'unread': return 'non lue';
+    case 'favorites': return 'favorite';
+    case 'groups': return 'de groupe';
+    default: return '';
+  }
+}
+
 function getMessageStatusClass(status) {
   switch (status) {
     case 'read':
@@ -173,40 +210,72 @@ function getMessageStatusClass(status) {
 }
 
 function setupFilterTabs() {
-  const tabs = document.querySelectorAll('#panel .flex.border-b.border-gray-700 button');
-  
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => {
-      // Réinitialiser tous les onglets
-      tabs.forEach(t => {
-        t.classList.remove('text-green-500', 'border-b-2', 'border-green-500', 'font-medium');
-        t.classList.add('text-gray-400', 'hover:text-white');
+  const tabs = {
+    'tab-all': 'all',
+    'tab-unread': 'unread', 
+    'tab-favorites': 'favorites',
+    'tab-groups': 'groups'
+  };
+
+  Object.entries(tabs).forEach(([tabId, filterType]) => {
+    const tab = document.getElementById(tabId);
+    if (tab) {
+      tab.addEventListener('click', () => {
+        // Réinitialiser tous les onglets
+        Object.keys(tabs).forEach(id => {
+          const tabElement = document.getElementById(id);
+          if (tabElement) {
+            tabElement.classList.remove('text-green-500', 'border-b-2', 'border-green-500', 'font-medium');
+            tabElement.classList.add('text-gray-400', 'hover:text-white');
+          }
+        });
+
+        // Activer l'onglet cliqué
+        tab.classList.remove('text-gray-400', 'hover:text-white');
+        tab.classList.add('text-green-500', 'border-b-2', 'border-green-500', 'font-medium');
+
+        // Définir le filtre et afficher
+        currentFilter = filterType;
+        
+        if (filterType === 'groups') {
+          // Afficher les groupes
+          document.getElementById('discussions-list').classList.add('hidden');
+          document.getElementById('groupes-list').classList.remove('hidden');
+          // Charger les groupes si nécessaire
+          if (window.displayGroupes) {
+            window.displayGroupes();
+          }
+        } else {
+          // Afficher les discussions
+          document.getElementById('discussions-list').classList.remove('hidden');
+          document.getElementById('groupes-list').classList.add('hidden');
+          displayDiscussions(getFilteredDiscussions());
+        }
       });
+    }
+  });
+}
 
-      // Activer l'onglet cliqué
-      tab.classList.remove('text-gray-400', 'hover:text-white');
-      tab.classList.add('text-green-500', 'border-b-2', 'border-green-500', 'font-medium');
-
-      // Définir le filtre
-      switch (index) {
-        case 0:
-          currentFilter = 'all';
-          break;
-        case 1:
-          currentFilter = 'unread';
-          break;
-        case 2:
-          currentFilter = 'favorites';
-          break;
-        case 3:
-          currentFilter = 'groups';
-          break;
+function setupSearchFilter() {
+  const searchInput = document.querySelector('input[placeholder="Rechercher ou démarrer une discussion"]');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      
+      if (searchTerm === '') {
+        displayDiscussions(getFilteredDiscussions());
+        return;
       }
 
-      // Afficher les discussions filtrées
-      displayDiscussions(getFilteredDiscussions());
+      const filteredDiscussions = getFilteredDiscussions().filter(discussion => 
+        discussion.name.toLowerCase().includes(searchTerm) ||
+        discussion.lastMessage.content.toLowerCase().includes(searchTerm) ||
+        (discussion.phone && discussion.phone.includes(searchTerm))
+      );
+
+      displayDiscussions(filteredDiscussions);
     });
-  });
+  }
 }
 
 // Fonction pour rafraîchir les discussions périodiquement
@@ -214,4 +283,9 @@ export function startDiscussionPolling() {
   setInterval(async () => {
     await loadDiscussions();
   }, 10000); // Rafraîchir toutes les 10 secondes
+}
+
+// Fonction pour rafraîchir manuellement
+export async function refreshDiscussions() {
+  await loadDiscussions();
 }
