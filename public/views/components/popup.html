@@ -1,0 +1,78 @@
+<div class="max-w-xs mx-auto">
+  <div
+    class="bg-gray-800 rounded-lg shadow-2xl border border-gray-700 py-2 text-white"
+  >
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors info-btn"
+    >
+      <i class="bx bx-info-circle text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Infos du contact</span>
+    </div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors"
+    >
+      <i class="bx bx-check-square text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Sélectionner des messages</span>
+    </div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors"
+    >
+      <i class="bx bx-bell-off text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Mode silencieux</span>
+    </div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors"
+    >
+      <i class="bx bx-timer text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Messages éphémères</span>
+    </div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors"
+    >
+      <i class="bx bx-heart text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Ajouter aux Favoris</span>
+    </div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors"
+    >
+      <i class="bx bx-x text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Fermer la discussion</span>
+    </div>
+
+    <div class="border-t border-gray-600 my-2"></div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-gray-700 cursor-pointer transition-colors"
+    >
+      <i class="bx bx-flag text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Signaler</span>
+    </div>
+
+    <div
+      class="flex items-center px-4 py-3 hover:bg-red-600 cursor-pointer transition-colors block-btn"
+      data-contact-id="${contactId}"
+    >
+      <i class="bx bx-block text-gray-300 mr-3 text-xl"></i>
+      <span class="text-gray-200 text-sm">Bloquer</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('[class*="hover:bg-"]').forEach((item) => {
+    item.addEventListener("click", function () {
+      const text = this.querySelector("span").textContent;
+      console.log(`Option sélectionnée: ${text}`);
+
+      this.style.transform = "scale(0.98)";
+      setTimeout(() => {
+        this.style.transform = "scale(1)";
+      }, 100);
+    });
+  });
+</script>
